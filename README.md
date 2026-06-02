@@ -1,54 +1,275 @@
-# BoardgameListingWebApp
+# 🚀 Déploiement d'une Application sur Kubernetes avec Kubeadm
 
-## Description
+## 📖 Présentation
 
-**Board Game Database Full-Stack Web Application.**
-This web application displays lists of board games and their reviews. While anyone can view the board game lists and reviews, they are required to log in to add/ edit the board games and their reviews. The 'users' have the authority to add board games to the list and add reviews, and the 'managers' have the authority to edit/ delete the reviews on top of the authorities of users.  
+Ce projet a pour objectif de mettre en place un cluster Kubernetes manuellement à l'aide de **Kubeadm**, puis de déployer une application conteneurisée dans un environnement Kubernetes.
 
-## Technologies
+L'objectif est de comprendre les composants principaux de Kubernetes, la mise en place d'un cluster, la gestion du réseau des Pods et le déploiement d'une application en utilisant les bonnes pratiques DevOps.
 
-- Java
-- Spring Boot
-- Amazon Web Services(AWS) EC2
-- Thymeleaf
-- Thymeleaf Fragments
-- HTML5
-- CSS
-- JavaScript
-- Spring MVC
-- JDBC
-- H2 Database Engine (In-memory)
-- JUnit test framework
-- Spring Security
-- Twitter Bootstrap
-- Maven
+---
 
-## Features
+# 🏗️ Architecture
 
-- Full-Stack Application
-- UI components created with Thymeleaf and styled with Twitter Bootstrap
-- Authentication and authorization using Spring Security
-  - Authentication by allowing the users to authenticate with a username and password
-  - Authorization by granting different permissions based on the roles (non-members, users, and managers)
-- Different roles (non-members, users, and managers) with varying levels of permissions
-  - Non-members only can see the boardgame lists and reviews
-  - Users can add board games and write reviews
-  - Managers can edit and delete the reviews
-- Deployed the application on AWS EC2
-- JUnit test framework for unit testing
-- Spring MVC best practices to segregate views, controllers, and database packages
-- JDBC for database connectivity and interaction
-- CRUD (Create, Read, Update, Delete) operations for managing data in the database
-- Schema.sql file to customize the schema and input initial data
-- Thymeleaf Fragments to reduce redundancy of repeating HTML elements (head, footer, navigation)
+```text
+Utilisateur
+     |
+     v
++----------------------+
+| Service Kubernetes   |
+| LoadBalancer         |
++----------+-----------+
+           |
+           v
++----------------------+
+| Deployment           |
+| Replicas : 2         |
++----------+-----------+
+           |
+     +-----+-----+
+     |           |
+     v           v
++---------+ +---------+
+|  Pod 1  | |  Pod 2  |
++---------+ +---------+
+```
 
-## How to Run
+---
 
-1. Clone the repository
-2. Open the project in your IDE of choice
-3. Run the application
-4. To use initial user data, use the following credentials.
-  - username: bugs    |     password: bunny (user role)
-  - username: daffy   |     password: duck  (manager role)
-5. You can also sign-up as a new user and customize your role to play with the application! 😊
-# boardgame-Nexus
+# ⚙️ Technologies utilisées
+
+- Ubuntu Server
+- Kubernetes
+- Kubeadm
+- Kubelet
+- Kubectl
+- Containerd
+- Calico CNI
+- Git
+- GitHub
+
+---
+
+# ☸️ Les composants Kubernetes
+
+## Kubeadm
+
+Kubeadm est l'outil utilisé pour créer et initialiser un cluster Kubernetes.
+
+Il permet notamment :
+
+- La création du Control Plane
+- La génération des certificats Kubernetes
+- La configuration des composants du cluster
+- L'ajout des nœuds Workers
+
+Exemple :
+
+```bash
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+```
+
+---
+
+## Kubelet
+
+Kubelet est un agent exécuté sur chaque nœud du cluster.
+
+Son rôle est de :
+
+- Communiquer avec l'API Kubernetes
+- Lancer les Pods
+- Surveiller les conteneurs
+- Remonter l'état du nœud au cluster
+
+---
+
+## Kubectl
+
+Kubectl est l'outil en ligne de commande permettant d'administrer Kubernetes.
+
+Exemples :
+
+```bash
+kubectl get nodes
+kubectl get pods
+kubectl get services
+kubectl logs <pod-name>
+```
+
+---
+
+## Containerd
+
+Containerd est le runtime de conteneurs utilisé par Kubernetes.
+
+Il est responsable de :
+
+- Télécharger les images
+- Créer les conteneurs
+- Exécuter les Pods
+- Gérer le cycle de vie des conteneurs
+
+---
+
+## Calico
+
+Calico est le plugin réseau (CNI) utilisé dans ce projet.
+
+Il permet :
+
+- La communication entre les Pods
+- La communication entre les nœuds
+- La gestion des adresses IP
+- L'application des politiques réseau
+
+---
+
+# 🔧 Mise en place du cluster
+
+## 1. Préparation des nœuds
+
+Sur tous les serveurs :
+
+- Mise à jour du système
+- Désactivation du Swap
+- Configuration du noyau Linux
+- Activation du routage IP
+
+---
+
+## 2. Installation de Containerd
+
+```bash
+sudo apt install -y containerd.io
+```
+
+Configuration du pilote Systemd :
+
+```bash
+SystemdCgroup = true
+```
+
+---
+
+## 3. Installation des composants Kubernetes
+
+```bash
+sudo apt install -y kubelet kubeadm kubectl
+```
+
+---
+
+## 4. Initialisation du cluster
+
+```bash
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+```
+
+---
+
+## 5. Installation du réseau Calico
+
+```bash
+kubectl apply -f calico.yaml
+```
+
+---
+
+## 6. Ajout des nœuds Workers
+
+```bash
+kubeadm join <MASTER-IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+```
+
+---
+
+# 🚀 Déploiement de l'application
+
+Création du namespace :
+
+```bash
+kubectl create namespace webapps
+```
+
+Déploiement :
+
+```bash
+kubectl apply -f deployement-service.yaml -n webapps
+```
+
+Vérification :
+
+```bash
+kubectl get all -n webapps
+```
+
+---
+
+# 🔍 Vérification du cluster
+
+Afficher les nœuds :
+
+```bash
+kubectl get nodes
+```
+
+Afficher les Pods :
+
+```bash
+kubectl get pods -n webapps
+```
+
+Afficher les services :
+
+```bash
+kubectl get svc -n webapps
+```
+
+Afficher les événements d'un Pod :
+
+```bash
+kubectl describe pod <pod-name> -n webapps
+```
+
+Afficher les logs :
+
+```bash
+kubectl logs <pod-name> -n webapps
+```
+
+---
+
+# 📸 Résultat
+
+Après le déploiement :
+
+✅ Cluster Kubernetes opérationnel
+
+✅ Réseau Calico fonctionnel
+
+✅ Application déployée avec succès
+
+✅ Réplication des Pods
+
+✅ Service exposé et accessible
+
+---
+
+# 🧠 Compétences démontrées
+
+- Administration Linux
+- Kubernetes
+- Containerd
+- Réseau Kubernetes
+- Déploiement d'applications conteneurisées
+- Troubleshooting Kubernetes
+- Git & GitHub
+- DevOps
+
+---
+
+
+
+
+**Adil Dalaoui**
+
